@@ -1,19 +1,121 @@
-﻿@page "/counter"
+@page "/counter"
 @rendermode InteractiveServer
 
-<PageTitle>Counter</PageTitle>
+<PageTitle>Counter — .NET on Clever Cloud</PageTitle>
 
-<h1>Counter</h1>
+<div class="cnt-card">
+    <div class="cnt-label">Interactive Counter</div>
 
-<p role="status">Current count: @currentCount</p>
+    <div class="cnt-display @(isAnimating ? "cnt-pop" : "")">
+        @currentCount
+    </div>
+    <p class="cnt-sub">Click the button to increment</p>
 
-<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+    <div class="cnt-actions">
+        <button class="cnt-btn cnt-btn-primary" @onclick="IncrementCount">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Increment
+        </button>
+        <button class="cnt-btn cnt-btn-secondary" @onclick="Reset">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.28"/>
+            </svg>
+            Reset
+        </button>
+    </div>
+</div>
 
 @code {
     private int currentCount = 0;
+    private bool isAnimating = false;
 
-    private void IncrementCount()
+    private async Task IncrementCount()
     {
         currentCount++;
+        isAnimating = true;
+        StateHasChanged();
+        await Task.Delay(200);
+        isAnimating = false;
+    }
+
+    private void Reset()
+    {
+        currentCount = 0;
     }
 }
+
+<style>
+    .cnt-card {
+        background: rgba(15,23,42,0.85);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255,255,255,0.07);
+        border-radius: 16px;
+        padding: 32px 28px;
+        max-width: 380px;
+        text-align: center;
+    }
+    .cnt-label {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #475569;
+        margin-bottom: 20px;
+    }
+    .cnt-display {
+        font-size: 72px;
+        font-weight: 300;
+        color: #38bdf8;
+        line-height: 1;
+        margin-bottom: 8px;
+        transition: transform 0.15s cubic-bezier(0.34,1.56,0.64,1), color 0.15s;
+        display: inline-block;
+    }
+    .cnt-display.cnt-pop {
+        transform: scale(1.18);
+        color: #7dd3fc;
+    }
+    .cnt-sub {
+        color: #475569;
+        font-size: 13px;
+        margin-bottom: 24px;
+    }
+    .cnt-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+    }
+    .cnt-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        padding: 11px 20px;
+        transition: all 0.2s;
+    }
+    .cnt-btn-primary {
+        background: #22c55e;
+        color: #052e16;
+    }
+    .cnt-btn-primary:hover {
+        background: #16a34a;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 16px rgba(34,197,94,0.3);
+    }
+    .cnt-btn-secondary {
+        background: rgba(56,189,248,0.12);
+        color: #7dd3fc;
+        border: 1px solid rgba(56,189,248,0.2);
+    }
+    .cnt-btn-secondary:hover {
+        background: rgba(56,189,248,0.2);
+        transform: translateY(-1px);
+    }
+    .cnt-btn:active { transform: scale(0.97); }
+</style>
