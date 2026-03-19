@@ -13,8 +13,85 @@
         <article class="content px-4">
             @Body
         </article>
+
+        <div class="cert-banner">
+            <div class="cert-icon">🎓</div>
+            <div class="cert-content">
+                <div class="cert-title">Envie de maîtriser Clever Cloud ?</div>
+                <div class="cert-sub">Validez vos compétences avec la certification officielle — et devenez expert de la plateforme.</div>
+            </div>
+            <a class="cert-btn" href="https://academy.clever.cloud/" target="_blank" rel="noopener noreferrer">Obtenir la certification →</a>
+        </div>
+
+        <footer class="cc-footer">
+    <div class="cc-footer-links">
+        <a class="cc-fl cc-fl-cc" href="https://www.clever-cloud.com" target="_blank" rel="noopener noreferrer">
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+            clever-cloud.com
+        </a>
+        <a class="cc-fl cc-fl-li" href="https://www.linkedin.com/company/clever-cloud/" target="_blank" rel="noopener noreferrer">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg>
+            LinkedIn
+        </a>
+        <a class="cc-fl" href="https://developers.clever-cloud.com/doc/applications/dotnet/" target="_blank" rel="noopener noreferrer">
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            .NET on CC
+        </a>
+        <a class="cc-fl" href="https://learn.microsoft.com/en-us/aspnet/core/blazor/" target="_blank" rel="noopener noreferrer">
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            Blazor Docs
+        </a>
+        <a class="cc-fl cc-fl-cert" href="https://academy.clever.cloud/" target="_blank" rel="noopener noreferrer">
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+            Certification Clever Cloud
+        </a>
+    </div>
+        <p class="cc-footer-copy">Open source demo &middot; Deployed on Clever Cloud</p>
+        </footer>
     </main>
 </div>
+
+<style>
+    .cert-banner {
+        display: flex; align-items: center; gap: 16px;
+        background: rgba(251,191,36,0.07); border: 1px solid rgba(251,191,36,0.25);
+        border-radius: 16px; padding: 20px 24px; margin: 0 16px 14px;
+    }
+    .cert-icon { font-size: 28px; flex-shrink: 0; }
+    .cert-content { flex: 1; }
+    .cert-title { font-size: 15px; font-weight: 600; color: #fbbf24; margin-bottom: 4px; }
+    .cert-sub { font-size: 13px; color: #78716c; line-height: 1.5; }
+    .cert-btn {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: #fbbf24; border-radius: 10px; color: #1c1917;
+        font-size: 13px; font-weight: 700; padding: 10px 18px;
+        text-decoration: none; transition: all 0.2s; white-space: nowrap; flex-shrink: 0;
+    }
+    .cert-btn:hover { background: #f59e0b; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(251,191,36,0.3); }
+    @@media (max-width: 540px) { .cert-banner { flex-direction: column; text-align: center; } }
+    .cc-footer {
+        border-top: 1px solid rgba(255,255,255,0.07);
+        padding: 22px 16px 8px;
+        margin-top: 40px;
+    }
+    .cc-footer-links {
+        display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 12px;
+    }
+    .cc-fl {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+        border-radius: 8px; color: #64748b; font-size: 12px; padding: 6px 12px;
+        text-decoration: none; transition: all 0.2s;
+    }
+    .cc-fl:hover { background: rgba(255,255,255,0.08); color: #94a3b8; }
+    .cc-fl-cc { color: #86efac !important; border-color: rgba(34,197,94,0.2) !important; background: rgba(34,197,94,0.06) !important; }
+    .cc-fl-cc:hover { background: rgba(34,197,94,0.12) !important; }
+    .cc-fl-li { color: #93c5fd !important; border-color: rgba(96,165,250,0.2) !important; background: rgba(96,165,250,0.06) !important; }
+    .cc-fl-li:hover { background: rgba(96,165,250,0.12) !important; }
+    .cc-fl-cert { color: #fbbf24 !important; border-color: rgba(251,191,36,0.25) !important; background: rgba(251,191,36,0.07) !important; }
+    .cc-fl-cert:hover { background: rgba(251,191,36,0.14) !important; }
+    .cc-footer-copy { text-align: center; color: #334155; font-size: 11px; }
+</style>
 
 <div id="blazor-error-ui">
     An unhandled error has occurred.
