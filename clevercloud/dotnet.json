@@ -1,0 +1,5 @@
+{
+  "deploy": {
+    "projectFile": "cc-dotnet-demo.csproj"
+  }
+}

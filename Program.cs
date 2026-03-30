@@ -16,7 +16,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// UseHttpsRedirection removed — TLS is terminated at Clever Cloud's reverse proxy
 
 app.UseStaticFiles();
 app.UseAntiforgery();
