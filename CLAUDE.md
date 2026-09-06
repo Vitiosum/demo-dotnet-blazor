@@ -48,7 +48,7 @@ Tu dois raisonner avec fermeté : ne propose pas plusieurs pistes floues si une 
 ## 🎯 Contexte du projet
 
 App **Blazor Server** .NET 8 de démonstration pour Clever Cloud.
-Interface web interactive avec compteur, navigation et bannière de certification Clever Cloud Academy.
+Page d'accueil « Clever Brand Kit » (héro, bloc certification Clever Cloud Academy, panneau « Vu depuis Clever Cloud »), page `/counter` interactive.
 Rendu 100% côté serveur via SignalR — pas de WebAssembly.
 
 Déployée sur **Clever Cloud** (runtime .NET).
@@ -90,11 +90,25 @@ Déployée sur **Clever Cloud** (runtime .NET).
 Program.cs                    → point d'entrée, pipeline HTTP
 cc-dotnet-demo.csproj         → fichier projet .NET
 Components/Pages/             → pages Blazor (Home, Counter, Error)
-Components/Layout/            → layout et navigation
-wwwroot/                      → assets statiques (CSS, Bootstrap)
+Components/Layout/            → MainLayout, CleverTopbar, CleverFooter
+Components/Shared/            → CleverLogo, CleverBadge (SVG inline), CleverCert, PlatformPanel
+wwwroot/cc-brand.css          → Clever Brand Kit — copié tel quel, ne pas modifier
+wwwroot/app.css               → styles spécifiques (compteur, erreur, #blazor-error-ui)
+docs/superpowers/specs/       → spec du Clever Brand Kit
 appsettings.json              → config (Urls: http://0.0.0.0:8080)
 clevercloud/dotnet.json       → config déploiement Clever Cloud
 ```
+
+---
+
+## 🎨 Design — Clever Brand Kit
+
+- Système visuel unique partagé par les démos Clever Cloud : `wwwroot/cc-brand.css` (tokens `--cc-*`, `.cc-topbar`, `.cc-hero`, `.cc-cert`, `.cc-platform`, `.cc-card`, `.cc-btn`, `.cc-footer`). Spec : `docs/superpowers/specs/2026-09-06-clever-brand-design.md`.
+- Polices : Plus Jakarta Sans + JetBrains Mono (Google Fonts, repli système). Thème navy `#13172e`, dégradé Clever `#f57461 → #cb1c42 → #a51050`.
+- Structure de la page d'accueil : topbar → héro → bloc certification → contenu démo + `PlatformPanel` → « Ce que Clever Cloud fait » → footer.
+- `PlatformPanel` lit `CC_APP_NAME`, `APP_ID`, `INSTANCE_NUMBER`, `INSTANCE_TYPE`, `CC_PRETTY_INSTANCE_NAME`, `CC_COMMIT_ID`, `CC_DEPLOYMENT_ID` ; `APP_ID` absent → « Local · hors Clever Cloud ».
+- Pas de Bootstrap, pas de `.razor.css` isolé, aucun package NuGet : les styles propres à la démo vont dans `wwwroot/app.css`, jamais dans `cc-brand.css`.
+- Piège Razor : dans `App.razor`, les `@` de l'URL Google Fonts sont échappés en `@@`.
 
 ---
 

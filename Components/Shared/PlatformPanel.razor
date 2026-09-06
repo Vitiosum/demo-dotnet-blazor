@@ -1,0 +1,42 @@
+@inject IWebHostEnvironment Env
+
+<div class="cc-platform cc-reveal" style="--i:6">
+    <div class="cc-platform__head">
+        <h3>Vu depuis Clever Cloud</h3>
+        @if (Live)
+        {
+            <span class="cc-pill cc-pill--ok"><span class="cc-dot"></span>Production</span>
+        }
+        else
+        {
+            <span class="cc-pill cc-pill--muted"><span class="cc-dot cc-dot--muted"></span>Local · hors Clever Cloud</span>
+        }
+    </div>
+    <dl class="cc-kv">
+        <div><dt>Application</dt><dd class="@Cls(AppName)">@AppName</dd></div>
+        <div><dt>App ID</dt><dd class="@Cls(AppId)">@AppId</dd></div>
+        <div><dt>Instance</dt><dd class="@Cls(Instance)">@Instance</dd></div>
+        <div><dt>Type d'instance</dt><dd class="@Cls(InstanceType)">@InstanceType</dd></div>
+        <div><dt>Commit déployé</dt><dd class="@Cls(Commit)">@Commit</dd></div>
+        <div><dt>Déploiement</dt><dd class="@Cls(Deployment)">@Deployment</dd></div>
+        <div><dt>Runtime</dt><dd>.NET @Environment.Version.ToString(2) · Blazor Server · SignalR</dd></div>
+        <div><dt>Environnement</dt><dd>@Env.EnvironmentName</dd></div>
+    </dl>
+    <div class="cc-platform__foot">Variables injectées automatiquement par la plateforme : <a href="https://www.clever.cloud/developers/doc/reference/reference-environment-variables/" target="_blank" rel="noopener">référence</a>.</div>
+</div>
+
+@code {
+    const string None = "—";
+
+    static string? G(string k) { var v = Environment.GetEnvironmentVariable(k); return string.IsNullOrEmpty(v) ? null : v; }
+    static string Cut(string? v, int n) => v is null ? None : (v.Length > n ? v[..n] : v);
+    static string Cls(string v) => v == None ? "is-empty" : "";
+
+    static bool Live => G("APP_ID") is not null;
+    static string AppName => G("CC_APP_NAME") ?? None;
+    static string AppId => G("APP_ID") ?? None;
+    static string Instance => G("INSTANCE_NUMBER") is string n ? $"#{n}" + (G("CC_PRETTY_INSTANCE_NAME") is string p ? $" · {p}" : "") : None;
+    static string InstanceType => G("INSTANCE_TYPE") ?? None;
+    static string Commit => Cut(G("CC_COMMIT_ID"), 7);
+    static string Deployment => Cut(G("CC_DEPLOYMENT_ID"), 16);
+}
