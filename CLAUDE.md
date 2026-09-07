@@ -58,18 +58,32 @@ Déployée sur **Clever Cloud** (runtime .NET).
 ## ☁️ Déploiement Clever Cloud
 
 - **Type d'app** : .NET
-- **Config** : `clevercloud/dotnet.json` → pointe sur `cc-dotnet-demo.csproj`
-- **Port** : `http://0.0.0.0:8080` (configuré dans `appsettings.json`)
-- **TLS** : terminé au niveau du reverse proxy Clever Cloud — l'app ne gère pas le HTTPS
+- **Sélection du projet** : variable `CC_DOTNET_PROJ=cc-dotnet-demo` (mécanisme officiel Clever) ; `clevercloud/dotnet.json` conservé mais non documenté par Clever
+- **Port** : 8080 obligatoire — `ASPNETCORE_URLS=http://0.0.0.0:8080` posée par la plateforme (redondant avec `Urls` dans `appsettings.json`, gardé pour le local)
+- **TLS** : terminé au niveau du reverse proxy Clever Cloud — l'app ne gère pas le HTTPS ni le HSTS
+- **Health check** : `GET /health` → `200 ok` ; déclarer `CC_HEALTH_CHECK_PATH=/health`
+- **Scaling** : min = max = 1 instance (circuits Blazor Server en mémoire, pas de backplane SignalR)
 
 ### Points de configuration critiques
-- `UseHttpsRedirection()` **supprimé** de `Program.cs` — causerait des redirect loops sur Clever Cloud
+- `UseHttpsRedirection()` et `UseHsts()` **supprimés** de `Program.cs` — redirect loops / HSTS inopérant derrière le proxy Clever Cloud
 - `appsettings.json` bind sur `0.0.0.0:8080` — compatible Clever Cloud
+- En-têtes de sécurité émis par un middleware inline dans `Program.cs` : `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: DENY` (pas de CSP : à tester en Report-Only avec SignalR)
 
 ### Variables d'environnement
-| Variable | Valeur recommandée |
-|---|---|
-| `ASPNETCORE_ENVIRONMENT` | `Production` |
+| Variable | Valeur | Statut |
+|---|---|---|
+| `ASPNETCORE_URLS` | `http://0.0.0.0:8080` | posée par Clever Cloud (8080 obligatoire) |
+| `ASPNETCORE_FORWARDEDHEADERS_ENABLED` | `true` | **recommandée** — active le middleware ForwardedHeaders côté hôte (`Request.IsHttps`, IP client depuis `X-Forwarded-*`) |
+| `ASPNETCORE_ENVIRONMENT` | `Production` | recommandée (défaut si absente) |
+| `CC_HEALTH_CHECK_PATH` | `/health` | recommandée |
+| `CC_DOTNET_PROJ` | `cc-dotnet-demo` | optionnelle (mécanisme officiel de sélection du projet) |
+| `AllowedHosts` | domaines de l'app | optionnelle — `*` par défaut, à restreindre seulement si des URL absolues sont générées |
+
+```bash
+clever env set ASPNETCORE_FORWARDEDHEADERS_ENABLED true
+clever env set ASPNETCORE_ENVIRONMENT Production
+clever env set CC_HEALTH_CHECK_PATH /health
+```
 
 ---
 
@@ -87,7 +101,7 @@ Déployée sur **Clever Cloud** (runtime .NET).
 ## 📁 Structure clé
 
 ```
-Program.cs                    → point d'entrée, pipeline HTTP
+Program.cs                    → point d'entrée, pipeline HTTP (en-têtes de sécurité, /health)
 cc-dotnet-demo.csproj         → fichier projet .NET
 Components/Pages/             → pages Blazor (Home, Counter, Error)
 Components/Layout/            → MainLayout, CleverTopbar, CleverFooter
@@ -96,7 +110,7 @@ wwwroot/cc-brand.css          → Clever Brand Kit — copié tel quel, ne pas m
 wwwroot/app.css               → styles spécifiques (compteur, erreur, #blazor-error-ui)
 docs/superpowers/specs/       → spec du Clever Brand Kit
 appsettings.json              → config (Urls: http://0.0.0.0:8080)
-clevercloud/dotnet.json       → config déploiement Clever Cloud
+clevercloud/dotnet.json       → indication du .csproj (legacy ; officiel = CC_DOTNET_PROJ)
 ```
 
 ---
@@ -127,9 +141,11 @@ Clever Cloud redéploie automatiquement après chaque push.
 ## ⚠️ Points de vigilance
 
 - **Ne pas réactiver `UseHttpsRedirection()`** — Clever Cloud gère le HTTPS au proxy, l'app ne reçoit que du HTTP en interne
-- **Ne pas activer `UseHsts()` hors du bloc dev** — même raison
+- **Ne pas réactiver `UseHsts()`** — même raison (retiré de `Program.cs`)
 - Blazor Server nécessite une connexion SignalR persistante — vérifier que le timeout de la plateforme est suffisant
-- Le fichier projet s'appelle `cc-dotnet-demo.csproj` — à garder cohérent avec `clevercloud/dotnet.json`
+- **1 instance seulement** : circuits Blazor Server en mémoire, pas de scaling horizontal sans backplane (Redis)
+- Le fichier projet s'appelle `cc-dotnet-demo.csproj` — à garder cohérent avec `CC_DOTNET_PROJ` et `clevercloud/dotnet.json`
+- **.NET 8 : fin de support le 10 novembre 2026** — planifier la migration `net10.0` (LTS jusqu'en novembre 2028, `CC_DOTNET_VERSION` sur Clever)
 
 ---
 
@@ -140,4 +156,5 @@ Clever Cloud redéploie automatiquement après chaque push.
 | Redirect loop | `UseHttpsRedirection()` actif | Vérifier `Program.cs` — doit être absent |
 | App non trouvée au build | `.csproj` mal référencé | Vérifier `clevercloud/dotnet.json` |
 | Page blanche / SignalR KO | Timeout connexion | Vérifier les logs runtime Clever Cloud |
-| Port non écouté | `appsettings.json` mal configuré | Doit contenir `"Urls": "http://0.0.0.0:8080"` |
+| Port non écouté | `appsettings.json` mal configuré | Doit contenir `"Urls": "http://0.0.0.0:8080"` (ou `ASPNETCORE_URLS` posée) |
+| Health check en échec | `CC_HEALTH_CHECK_PATH` absent ou faux | Définir `/health` |
