@@ -51,7 +51,7 @@ App **Blazor Server** .NET 8 de démonstration pour Clever Cloud.
 Page d'accueil « Clever Brand Kit » (héro, bloc certification Clever Cloud Academy, panneau « Vu depuis Clever Cloud »), page `/counter` interactive.
 Rendu 100% côté serveur via SignalR — pas de WebAssembly.
 
-Déployée sur **Clever Cloud** (runtime .NET).
+Cible de déploiement : **Clever Cloud**, runtime .NET natif (aucun Dockerfile). Aucune application n'est maintenue en service pour cette démo : elle se recrée à la demande depuis le dépôt.
 
 ---
 
@@ -134,7 +134,7 @@ git commit -m "description"
 git push
 ```
 
-Clever Cloud redéploie automatiquement après chaque push.
+Une fois le dépôt lié à une application .NET, Clever Cloud redéploie automatiquement à chaque push.
 
 ---
 
@@ -154,7 +154,7 @@ Clever Cloud redéploie automatiquement après chaque push.
 | Symptôme | Cause probable | Correction |
 |---|---|---|
 | Redirect loop | `UseHttpsRedirection()` actif | Vérifier `Program.cs` — doit être absent |
-| App non trouvée au build | `.csproj` mal référencé | Vérifier `clevercloud/dotnet.json` |
+| App non trouvée au build | `.csproj` mal référencé | Poser `CC_DOTNET_PROJ=cc-dotnet-demo` (mécanisme officiel) ; `clevercloud/dotnet.json` n'est qu'un reliquat |
 | Page blanche / SignalR KO | Timeout connexion | Vérifier les logs runtime Clever Cloud |
 | Port non écouté | `appsettings.json` mal configuré | Doit contenir `"Urls": "http://0.0.0.0:8080"` (ou `ASPNETCORE_URLS` posée) |
 | Health check en échec | `CC_HEALTH_CHECK_PATH` absent ou faux | Définir `/health` |

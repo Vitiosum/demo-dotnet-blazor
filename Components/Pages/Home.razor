@@ -11,7 +11,7 @@
             <li>Build <span class="cc-kbd">dotnet publish</span> automatique</li>
             <li>WebSockets supportés</li>
             <li>HTTPS et domaine inclus</li>
-            <li>Scaling horizontal</li>
+            <li>Health check sur <span class="cc-kbd">/health</span></li>
         </ul>
     </div>
 </section>
@@ -49,7 +49,7 @@
             <span class="cc-section__sub">Sans devops, sans Dockerfile</span>
         </div>
         <div class="cc-grid cc-grid--3">
-            <div class="cc-card cc-card--accent cc-reveal" style="--i:8"><div class="cc-card__label">Déploiement</div><div class="cc-card__title cc-mt-1">git push → dotnet publish → run</div><p class="cc-card__hint">Runtime .NET détecté, projet ciblé par <span class="cc-kbd">clevercloud/dotnet.json</span>, redémarrage sans interruption.</p></div>
+            <div class="cc-card cc-card--accent cc-reveal" style="--i:8"><div class="cc-card__label">Déploiement</div><div class="cc-card__title cc-mt-1">git push → dotnet publish → run</div><p class="cc-card__hint">Runtime .NET détecté, projet ciblé par <span class="cc-kbd">CC_DOTNET_PROJ</span>, redémarrage sans interruption.</p></div>
             <div class="cc-card cc-card--accent cc-reveal" style="--i:9"><div class="cc-card__label">Temps réel</div><div class="cc-card__title cc-mt-1">WebSockets de bout en bout</div><p class="cc-card__hint">Le reverse proxy laisse passer la connexion SignalR persistante de Blazor Server, sans configuration.</p></div>
             <div class="cc-card cc-card--accent cc-reveal" style="--i:10"><div class="cc-card__label">Confiance</div><div class="cc-card__title cc-mt-1">Hébergé en France</div><p class="cc-card__hint">ISO 27001, HDS, hors de portée des lois extraterritoriales.</p></div>
         </div>
