@@ -1,3 +1,15 @@
-obj
-bin
-.vscodeCLAUDE.md
+# Build
+bin/
+obj/
+publish/
+TestResults/
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.user
+*.swp
+
+# OS
+.DS_Store
