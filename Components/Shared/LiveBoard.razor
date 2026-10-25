@@ -1,0 +1,155 @@
+@using System.Globalization
+@implements IDisposable
+@inject LiveRoom Room
+@inject VisitorCircuit Me
+
+@{
+    var visitors = snap.Visitors;
+    var n = visitors.Count;
+    var shown = visitors.Take(MaxNodes).ToArray();
+    var maxBar = Math.Max(Math.Max(snap.History.DefaultIfEmpty(0).Max(), n * 3), 3);
+}
+
+<section class="lb" aria-labelledby="lb-title">
+    <div class="lb__main cc-reveal" style="--i:0">
+        <p class="lb__room"><span class="lb__live" aria-hidden="true"></span>Salle : <b>@DemoSettings.RoomName</b></p>
+        <h1 id="lb-title" class="lb__title" aria-live="polite">
+            @if (n == 0) { <text>Connexion en direct…</text> }
+            else { <text>@n navigateur@(n > 1 ? "s" : "") en direct.</text> }
+        </h1>
+        <p class="lb__count"><b>@snap.Pushed.ToString("N0", Fr)</b> mises à jour poussées · <b>@snap.Signals.ToString("N0", Fr)</b> signal@(snap.Signals > 1 ? "s" : "") · tick <b>@DemoSettings.PulseMs ms</b></p>
+        <p class="lb__lead">Ouvrez cette page dans un autre onglet ou sur votre téléphone : chaque navigateur apparaît ici, en direct. L'état vit en mémoire sur le serveur .NET, chaque changement part par SignalR, sans JavaScript métier.</p>
+        <div class="lb__cta">
+            <button type="button" class="cc-btn cc-btn--gradient" @onclick="SendSignal">Envoyer un signal à tous</button>
+            <a class="cc-btn" href="#cert-title">Se certifier Clever Cloud ↓</a>
+        </div>
+
+        <div class="lb__pulse">
+            <div class="lb__pulse-head"><span>Battement serveur</span><time class="cc-mono">@snap.ServerTime.ToString("HH:mm:ss", Fr) UTC</time></div>
+            <div class="lb__bars" aria-hidden="true">
+                @foreach (var h in snap.History)
+                {
+                    <i class="@(h > n && n > 0 ? "is-spike" : "")" style="height:@(Math.Max(4, h * 100 / maxBar))%"></i>
+                }
+            </div>
+            <p class="lb__legend">Une barre par tick : mises à jour poussées par le serveur aux navigateurs.</p>
+        </div>
+
+        <ol class="lb__feed" aria-label="Journal de la salle">
+            @foreach (var e in snap.Events)
+            {
+                <li @key="e.Seq" class="is-@e.Kind">
+                    <time>@e.At.ToString("HH:mm:ss", Fr)</time>
+                    <span class="lb-hue lb-hue--@((e.Number - 1) % 6)">#@e.Number</span>
+                    <span>@Label(e)@(e.Number == Me.Number ? " (vous)" : "")</span>
+                </li>
+            }
+            @if (snap.Events.Count == 0)
+            {
+                <li class="is-empty"><span>Le journal s'écrit dès qu'un navigateur se connecte.</span></li>
+            }
+        </ol>
+    </div>
+
+    <aside class="lb-instance cc-reveal" style="--i:1" aria-label="Instance Clever Cloud">
+        <div class="lb-instance__bar">
+            <i></i><i></i><i></i>
+            <span>@(DemoSettings.AppName ?? "demo-dotnet-blazor")</span>
+            <span class="lb-env @(DemoSettings.IsProduction ? "is-production" : "")">@DemoSettings.AppEnv</span>
+        </div>
+
+        <div class="lb-orbit" style="--pulse:@(Math.Min(900, DemoSettings.PulseMs * 8 / 10))ms" role="img" aria-label="@n navigateur(s) reliés en WebSocket à l'instance">
+            <svg class="lb-orbit__lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                <ellipse cx="50" cy="50" rx="@Rx" ry="@Ry" />
+                @for (var i = 0; i < shown.Length; i++)
+                {
+                    var (x, y) = Pos(i, shown.Length);
+                    <line x1="50" y1="50" x2="@F(x)" y2="@F(y)" />
+                }
+            </svg>
+            @if (snap.LastSignalSeq > seenSignalSeq)
+            {
+                <div @key="snap.LastSignalSeq" class="lb-orbit__wave" aria-hidden="true"></div>
+            }
+            <div @key="snap.Tick" class="lb-orbit__pulses" aria-hidden="true">
+                @for (var i = 0; i < shown.Length; i++)
+                {
+                    var (x, y) = Pos(i, shown.Length);
+                    <i style="--x:@F(x)%;--y:@F(y)%"></i>
+                }
+            </div>
+            <div class="lb-orbit__core">
+                <svg viewBox="0 0 101 116" aria-hidden="true"><polygon fill="#AB2B4A" points="100.423 29.134 100.423 86.868 89.721 73.062 83.76 58.003 83.756 58.003 89.418 42.731" /><polygon fill="#E87A68" points=".429 29.134 .429 86.868 9.889 73.481 17.092 58.003 17.096 58.003 9.773 43.319" /><polygon fill="#D74D4E" points="83.756 58.003 52.241 60.003 17.092 58.003 31.76 29.134 50.426 .269 70.722 31.961" /><polygon fill="#BD3246" points="100.423 29.134 83.756 58.003 50.426 .269" /><polygon fill="#F19175" points="50.426 .269 17.092 58.003 .425 29.134" /><polygon fill="#CF3942" points="83.756 58.003 72.365 82.931 50.426 115.737 27.849 81.83 17.092 58.003" /><polygon fill="#E0625B" points="50.426 115.737 .425 86.868 17.092 58.003" /><polygon fill="#9A244F" points="50.422 115.737 100.423 86.868 83.756 58.003" /></svg>
+                <b>@(DemoSettings.Instance ?? "instance locale")</b>
+                <small>.NET @Environment.Version.ToString(2)</small>
+            </div>
+            @for (var i = 0; i < shown.Length; i++)
+            {
+                var v = shown[i];
+                var (x, y) = Pos(i, shown.Length);
+                var mine = v.Number == Me.Number;
+                <div @key="v.Number" class="lb-node lb-hue--@v.Hue @(mine ? "is-me" : "")" style="left:@F(x)%;top:@F(y)%">
+                    @if (v.Number == snap.LastSignalBy && snap.LastSignalSeq > seenSignalSeq)
+                    {
+                        <span @key="snap.LastSignalSeq" class="lb-node__flash"></span>
+                    }
+                    <b>#@v.Number</b>
+                    @if (mine) { <small>vous</small> }
+                </div>
+            }
+            @if (n > MaxNodes)
+            {
+                <span class="lb-orbit__more">+@(n - MaxNodes)</span>
+            }
+        </div>
+
+        <PlatformPanel />
+    </aside>
+</section>
+
+@code {
+    const int MaxNodes = 12;
+    const double Rx = 39, Ry = 35;
+    static readonly CultureInfo Fr = CultureInfo.GetCultureInfo("fr-FR");
+
+    RoomSnapshot snap = default!;
+    long seenSignalSeq = long.MaxValue; // pas d'onde au rendu initial
+    bool subscribed;
+
+    protected override void OnInitialized() => snap = Room.Snapshot;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        // OnAfterRender ne s'exécute qu'une fois le circuit SignalR établi (jamais au pré-rendu).
+        if (!firstRender) return;
+        seenSignalSeq = Room.Snapshot.LastSignalSeq;
+        Room.Changed += OnChanged;
+        subscribed = true;
+        OnChanged(Room.Snapshot);
+    }
+
+    void OnChanged(RoomSnapshot s) => _ = InvokeAsync(() => { snap = s; StateHasChanged(); });
+
+    void SendSignal() => Room.Signal(Me.Number);
+
+    static (double X, double Y) Pos(int i, int count)
+    {
+        // Premier navigateur à gauche du cœur, les suivants répartis sur l'ellipse.
+        var a = (180 + i * 360.0 / Math.Max(count, 1)) * Math.PI / 180;
+        return (50 + Rx * Math.Cos(a), 50 + Ry * Math.Sin(a));
+    }
+
+    static string F(double v) => v.ToString("0.##", CultureInfo.InvariantCulture);
+
+    static string Label(LiveEvent e) => e.Kind switch
+    {
+        "join" => "s'est connecté",
+        "leave" => "s'est déconnecté",
+        _ => "envoie un signal à tous",
+    };
+
+    public void Dispose()
+    {
+        if (subscribed) Room.Changed -= OnChanged;
+    }
+}

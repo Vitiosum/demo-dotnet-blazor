@@ -4,9 +4,9 @@
             <CleverLogo />
         </a>
         <span class="cc-topbar__sep"></span>
-        <div class="cc-topbar__demo"><small>Démo</small>Blazor Server</div>
+        <a class="cc-topbar__demo" href=""><small>Démo</small>Salle en direct</a>
         <nav class="cc-topbar__nav" aria-label="Pages">
-            <NavLink class="cc-topbar__link" href="" Match="NavLinkMatch.All" ActiveClass="is-active">Accueil</NavLink>
+            <NavLink class="cc-topbar__link" href="" Match="NavLinkMatch.All" ActiveClass="is-active">Salle</NavLink>
             <NavLink class="cc-topbar__link" href="counter" ActiveClass="is-active">Compteur</NavLink>
         </nav>
         <span class="cc-topbar__spacer"></span>
@@ -18,7 +18,7 @@
             }
             else
             {
-                <span class="cc-pill cc-pill--muted"><span class="cc-dot cc-dot--muted"></span>Local</span>
+                <span class="cc-pill cc-pill--muted"><span class="cc-dot cc-dot--muted"></span>Local · hors Clever Cloud</span>
             }
             <a class="cc-pill cc-pill--gradient" href="https://academy.clever.cloud/" target="_blank" rel="noopener">Se certifier ↗</a>
         </nav>
@@ -27,5 +27,5 @@
 
 @code {
     // APP_ID est injecté par Clever Cloud sur chaque instance : absent en local.
-    static bool Live => !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("APP_ID"));
+    static bool Live => DemoSettings.Live;
 }

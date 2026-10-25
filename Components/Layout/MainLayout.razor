@@ -2,6 +2,11 @@
 
 <CleverTopbar />
 
+@if (DemoSettings.Announcement.Length > 0)
+{
+    <div class="lb-announce" role="status"><div class="cc-container"><code>ANNOUNCEMENT</code><span>@DemoSettings.Announcement</span></div></div>
+}
+
 <main>
     @Body
 </main>
