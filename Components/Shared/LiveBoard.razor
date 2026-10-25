@@ -13,11 +13,18 @@
 <section class="lb" aria-labelledby="lb-title">
     <div class="lb__main cc-reveal" style="--i:0">
         <p class="lb__room"><span class="lb__live" aria-hidden="true"></span>Salle : <b>@DemoSettings.RoomName</b></p>
-        <h1 id="lb-title" class="lb__title" aria-live="polite">
+        <h1 id="lb-title" class="lb__title">
             @if (n == 0) { <text>Connexion en direct…</text> }
             else { <text>@n navigateur@(n > 1 ? "s" : "") en direct.</text> }
         </h1>
-        <p class="lb__count"><b>@snap.Pushed.ToString("N0", Fr)</b> mises à jour poussées · <b>@snap.Signals.ToString("N0", Fr)</b> signal@(snap.Signals > 1 ? "s" : "") · tick <b>@DemoSettings.PulseMs ms</b></p>
+        <span class="visually-hidden" role="status" aria-atomic="true">@(n == 0 ? "" : $"{n} navigateur{(n > 1 ? "s" : "")} en direct")</span>
+        <p class="lb__count"><b>@snap.Pushed.ToString("N0", Fr)</b> mises à jour poussées
+            @if (snap.Signals > 0)
+            {
+                <text>· <b>@snap.Signals.ToString("N0", Fr)</b> signal@(snap.Signals > 1 ? "s" : "")</text>
+            }
+            · tick <b>@DemoSettings.PulseMs ms</b>
+        </p>
         <p class="lb__lead">Ouvrez cette page dans un autre onglet ou sur votre téléphone : chaque navigateur apparaît ici, en direct. L'état vit en mémoire sur le serveur .NET, chaque changement part par SignalR, sans JavaScript métier.</p>
         <div class="lb__cta">
             <button type="button" class="cc-btn cc-btn--gradient" @onclick="SendSignal">Envoyer un signal à tous</button>
@@ -29,7 +36,7 @@
             <div class="lb__bars" aria-hidden="true">
                 @foreach (var h in snap.History)
                 {
-                    <i class="@(h > n && n > 0 ? "is-spike" : "")" style="height:@(Math.Max(4, h * 100 / maxBar))%"></i>
+                    <i class="@(h == 0 ? "is-ghost" : h > n && n > 0 ? "is-spike" : "")" style="height:@(h == 0 ? 33 : Math.Max(4, h * 100 / maxBar))%"></i>
                 }
             </div>
             <p class="lb__legend">Une barre par tick : mises à jour poussées par le serveur aux navigateurs.</p>
