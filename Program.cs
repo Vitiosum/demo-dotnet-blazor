@@ -1,10 +1,18 @@
 using cc_dotnet_demo.Components;
+using cc_dotnet_demo.Live;
+using Microsoft.AspNetCore.Components.Server.Circuits;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// Salle partagée en mémoire (navigateurs connectés, signaux, battement serveur) : une seule instance par conception.
+builder.Services.AddSingleton<LiveRoom>();
+builder.Services.AddHostedService<PulseService>();
+builder.Services.AddScoped<VisitorCircuit>();
+builder.Services.AddScoped<CircuitHandler>(sp => sp.GetRequiredService<VisitorCircuit>());
 
 var app = builder.Build();
 
