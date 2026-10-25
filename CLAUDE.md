@@ -52,8 +52,7 @@ Chaque navigateur qui ouvre la page apparaît en temps réel (orbite autour de l
 toutes les `PULSE_MS`, un bouton envoie un signal à tous les navigateurs. Rendu 100 % serveur via SignalR, pas de WebAssembly,
 aucun package NuGet, pas de base de données.
 
-Cible : **Clever Cloud**, runtime .NET natif (aucun Dockerfile). Aucune application n'est maintenue en service : elle se recrée
-à la demande depuis le dépôt.
+Cible : **Clever Cloud**, runtime .NET natif (aucun Dockerfile). Application en service du 2026-10-25 au 2026-11-05 (suppression planifiée après le tournage vidéo du 2026-11-04) : `app_e06ed3e5-51d5-42cd-a363-60a456060a97`, https://app-e06ed3e5-51d5-42cd-a363-60a456060a97.cleverapps.io/. Après cette date, la recréer depuis le dépôt avec la procédure du README.
 
 ---
 
@@ -129,7 +128,7 @@ wwwroot/app.css                     → styles propres (préfixe lb-)
 
 ## 🎨 Design
 
-- Kit `cc-brand.css` intact ; styles propres dans `wwwroot/app.css` (préfixe `lb-`), dégradé assombri `#d14836 → #cb1c42 → #a51050` pour le texte blanc.
+- Kit `cc-brand.css` intact ; styles propres dans `wwwroot/app.css` (préfixe `lb-`), dégradé assombri `#cc4432 → #cb1c42 → #a51050` pour le texte blanc.
 - Premier écran = le produit : titre « N navigateurs en direct. », orbite des navigateurs autour de l'instance, battement serveur, journal.
 - Couleurs des navigateurs : `.lb-hue--0..5` (contraste ≥ 4,5:1 sur navy). `prefers-reduced-motion` coupe pulsations, ondes et rotation du badge.
 - Piège Razor : dans `App.razor`, les `@` de l'URL Google Fonts sont échappés en `@@`.
@@ -141,8 +140,11 @@ wwwroot/app.css                     → styles propres (préfixe lb-)
 ```bash
 git add <fichiers>
 git commit -m "description"
-clever deploy
+git push          # sauvegarde GitHub uniquement
+clever deploy     # déploie main sur Clever Cloud
 ```
+
+Pas de liaison GitHub → Clever Cloud (`clever create --github` refusé par l'API, « wrong oauth application data ») : un `git push` ne redéploie pas.
 
 ---
 

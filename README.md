@@ -50,6 +50,10 @@ clever env set APP_ENV production
 clever deploy
 ```
 
+Application en service du 2026-10-25 au 2026-11-05 (suppression planifiée après le tournage vidéo du 2026-11-04) : `app_e06ed3e5-51d5-42cd-a363-60a456060a97`, https://app-e06ed3e5-51d5-42cd-a363-60a456060a97.cleverapps.io/. Après cette date, recréer avec la procédure ci-dessus.
+
+Déployer une modification : `git push` (sauvegarde GitHub) puis `clever deploy`. Pas de liaison GitHub → Clever Cloud : un `git push` seul ne redéploie pas.
+
 | Variable | Valeur | Pourquoi (doc Clever) |
 |---|---|---|
 | `CC_HEALTH_CHECK_PATH` | `/health` | « If these paths don't return a 2xx response code, the deployment fails. » |
