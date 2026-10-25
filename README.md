@@ -97,3 +97,8 @@ Components/Pages/Home.razor, Counter.razor, Error.razor
 wwwroot/cc-brand.css               → Clever Brand Kit (copie, ne pas modifier)
 wwwroot/app.css                    → styles propres à la démo
 ```
+
+## Security
+
+Security headers and a strict CSP (`script-src 'self'`, `connect-src 'self'` for the SignalR WebSocket) are set by a middleware in `Program.cs`; Kestrel's `Server` header is disabled (`AddServerHeader = false`).
+

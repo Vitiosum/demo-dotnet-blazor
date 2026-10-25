@@ -148,6 +148,11 @@ Pas de liaison GitHub → Clever Cloud (`clever create --github` refusé par l'A
 
 ---
 
+## 🔒 Sécurité (vérifié en production le 2026-10-25)
+
+- `Program.cs` : `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options` et une CSP stricte (`script-src 'self'`, `connect-src 'self'` pour le WebSocket SignalR de même origine) posés par un middleware ; `ConfigureKestrel(o => o.AddServerHeader = false)` retire l'en-tête `Server: Kestrel`.
+- Blazor Server ne charge que `_framework/blazor.web.js` : n'ajoutez pas de script inline, la CSP le bloquerait. Circuit SignalR vérifié en production sous cette CSP.
+
 ## ⚠️ Points de vigilance
 
 - Ne pas réactiver `UseHttpsRedirection()` / `UseHsts()` (proxy Clever)
