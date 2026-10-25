@@ -47,43 +47,54 @@ Tu dois raisonner avec fermeté : ne propose pas plusieurs pistes floues si une 
 
 ## 🎯 Contexte du projet
 
-App **Blazor Server** .NET 8 de démonstration pour Clever Cloud.
-Page d'accueil « Clever Brand Kit » (héro, bloc certification Clever Cloud Academy, panneau « Vu depuis Clever Cloud »), page `/counter` interactive.
-Rendu 100% côté serveur via SignalR — pas de WebAssembly.
+App **Blazor Server** .NET 8 de démonstration pour Clever Cloud : une « salle en direct ».
+Chaque navigateur qui ouvre la page apparaît en temps réel (orbite autour de l'instance), le serveur pousse son battement
+toutes les `PULSE_MS`, un bouton envoie un signal à tous les navigateurs. Rendu 100 % serveur via SignalR, pas de WebAssembly,
+aucun package NuGet, pas de base de données.
 
-Cible de déploiement : **Clever Cloud**, runtime .NET natif (aucun Dockerfile). Aucune application n'est maintenue en service pour cette démo : elle se recrée à la demande depuis le dépôt.
+Cible : **Clever Cloud**, runtime .NET natif (aucun Dockerfile). Aucune application n'est maintenue en service : elle se recrée
+à la demande depuis le dépôt.
 
 ---
 
 ## ☁️ Déploiement Clever Cloud
 
-- **Type d'app** : .NET
-- **Sélection du projet** : variable `CC_DOTNET_PROJ=cc-dotnet-demo` (mécanisme officiel Clever) ; `clevercloud/dotnet.json` conservé mais non documenté par Clever
-- **Port** : 8080 obligatoire — `ASPNETCORE_URLS=http://0.0.0.0:8080` posée par la plateforme (redondant avec `Urls` dans `appsettings.json`, gardé pour le local)
-- **TLS** : terminé au niveau du reverse proxy Clever Cloud — l'app ne gère pas le HTTPS ni le HSTS
-- **Health check** : `GET /health` → `200 ok` ; déclarer `CC_HEALTH_CHECK_PATH=/health`
-- **Scaling** : min = max = 1 instance (circuits Blazor Server en mémoire, pas de backplane SignalR)
+- **Type d'app** : `--type dotnet` ; build `dotnet publish --framework net8.0 --configuration Release` (doc Clever)
+- **Sélection du projet** : un seul `.csproj` à la racine, détecté automatiquement ; `CC_DOTNET_PROJ=cc-dotnet-demo` seulement s'il y en a plusieurs. `clevercloud/dotnet.json` supprimé (non documenté)
+- **Port** : 8080, `ASPNETCORE_URLS=http://0.0.0.0:8080` posée par la plateforme (identique au `Urls` de `appsettings.json`)
+- **TLS** : terminé au reverse proxy Clever ; ni `UseHttpsRedirection()` ni `UseHsts()`
+- **Health check** : `GET /health` → `200 ok`
+- **Scaling** : **1 instance fixe** (XS ; nano exigerait un build dédié). La salle et les circuits vivent en mémoire : deux instances = deux salles. Ne pas vanter le scaling horizontal
 
-### Points de configuration critiques
-- `UseHttpsRedirection()` et `UseHsts()` **supprimés** de `Program.cs` — redirect loops / HSTS inopérant derrière le proxy Clever Cloud
-- `appsettings.json` bind sur `0.0.0.0:8080` — compatible Clever Cloud
-- En-têtes de sécurité émis par un middleware inline dans `Program.cs` : `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: DENY` (pas de CSP : à tester en Report-Only avec SignalR)
-
-### Variables d'environnement
-| Variable | Valeur | Statut |
+### Variables à poser (citations de la doc Clever)
+| Variable | Valeur | Preuve |
 |---|---|---|
-| `ASPNETCORE_URLS` | `http://0.0.0.0:8080` | posée par Clever Cloud (8080 obligatoire) |
-| `ASPNETCORE_FORWARDEDHEADERS_ENABLED` | `true` | **recommandée** — active le middleware ForwardedHeaders côté hôte (`Request.IsHttps`, IP client depuis `X-Forwarded-*`) |
-| `ASPNETCORE_ENVIRONMENT` | `Production` | recommandée (défaut si absente) |
-| `CC_HEALTH_CHECK_PATH` | `/health` | recommandée |
-| `CC_DOTNET_PROJ` | `cc-dotnet-demo` | optionnelle (mécanisme officiel de sélection du projet) |
-| `AllowedHosts` | domaines de l'app | optionnelle — `*` par défaut, à restreindre seulement si des URL absolues sont générées |
+| `CC_HEALTH_CHECK_PATH` | `/health` | « If these paths don't return a 2xx response code, the deployment fails. » |
+| `CC_CACHE_DEPENDENCIES` | `true` | Référence : « Enable caching of your build dependencies to speed up following builds. » (défaut `false` dans la référence, alors que la page .NET dit « cached by default » : poser `true` lève l'ambiguïté ; gain faible, aucun package NuGet) |
+| `ASPNETCORE_FORWARDEDHEADERS_ENABLED` | `true` | Variable ASP.NET Core (Microsoft), pas Clever : schéma et IP client depuis `X-Forwarded-*` |
+| `CC_DOTNET_PROJ` | `cc-dotnet-demo` | Optionnelle : « If multiple project files are present in your repository » |
 
-```bash
-clever env set ASPNETCORE_FORWARDEDHEADERS_ENABLED true
-clever env set ASPNETCORE_ENVIRONMENT Production
-clever env set CC_HEALTH_CHECK_PATH /health
-```
+Inutiles ici : `CC_DOTNET_TFM` (un seul framework), `CC_DOTNET_PROFILE` (défaut `Release`). Pas de ReadyToRun (RuntimeIdentifier + packs à télécharger au build, démarrage déjà < 1 s à chaud), pas de trimming (non supporté par Blazor Server), pas d'`InvariantGlobalization` (formats fr-FR utilisés).
+
+### Variables de démo (onglet Variables de la console)
+| Variable | Défaut | Effet visible |
+|---|---|---|
+| `APP_ENV` | `local` | Pastille de la barre d'instance ; dégradé Clever si `production` |
+| `ANNOUNCEMENT` | vide | Bandeau en haut de toutes les pages (`MainLayout.razor`) |
+| `ROOM_NAME` | `Salle de démo` | « Salle : … » au-dessus du titre (coupé à 60 caractères) |
+| `PULSE_MS` | `1000` | Cadence du battement serveur (barres, points lumineux, horloge) ; hors 250–10 000 ou invalide → `1000` |
+
+Lues une fois au démarrage (`Live/DemoSettings.cs`) : changer → `clever restart` → recharger.
+
+### Scénario vidéo
+1. Ouvrir la page : « 1 navigateur en direct. », le point « vous » en orbite, les barres qui défilent.
+2. Ouvrir un 2ᵉ onglet (ou le téléphone) : le titre passe à 2 dans les deux onglets, le journal note « #2 s'est connecté ».
+3. Cliquer « Envoyer un signal à tous » : onde depuis l'instance, pic rouge dans les barres, ligne dans le journal de chaque onglet.
+4. Fermer un onglet : « s'est déconnecté » immédiatement (coupure du WebSocket, `OnConnectionDownAsync`).
+5. Console Clever → Variables : `ROOM_NAME`, `PULSE_MS=300`, `ANNOUNCEMENT` → `clever restart` → recharger : bandeau, nom de salle, battement plus rapide.
+6. Bouton « Se certifier Clever Cloud ↓ » → bloc Academy.
+
+Au redémarrage, les circuits sont perdus (état en mémoire) : Blazor propose de recharger, c'est attendu.
 
 ---
 
@@ -91,9 +102,9 @@ clever env set CC_HEALTH_CHECK_PATH /health
 
 | Élément | Valeur |
 |---|---|
-| .NET | 8.0 |
+| .NET | 8.0 (SDK local 8.0.131 ; .NET 10 non installé localement) |
 | Type | Blazor Server (Interactive Server Components) |
-| Dépendances NuGet | Aucune (SDK Web uniquement) |
+| Dépendances NuGet | Aucune |
 | Base de données | Aucune |
 
 ---
@@ -101,27 +112,26 @@ clever env set CC_HEALTH_CHECK_PATH /health
 ## 📁 Structure clé
 
 ```
-Program.cs                    → point d'entrée, pipeline HTTP (en-têtes de sécurité, /health)
-cc-dotnet-demo.csproj         → fichier projet .NET
-Components/Pages/             → pages Blazor (Home, Counter, Error)
-Components/Layout/            → MainLayout, CleverTopbar, CleverFooter
-Components/Shared/            → CleverLogo, CleverBadge (SVG inline), CleverCert, PlatformPanel
-wwwroot/cc-brand.css          → Clever Brand Kit — copié tel quel, ne pas modifier
-wwwroot/app.css               → styles spécifiques (compteur, erreur, #blazor-error-ui)
-docs/superpowers/specs/       → spec du Clever Brand Kit
-appsettings.json              → config (Urls: http://0.0.0.0:8080)
-clevercloud/dotnet.json       → indication du .csproj (legacy ; officiel = CC_DOTNET_PROJ)
+Program.cs                          → pipeline HTTP, en-têtes de sécurité, /health, services de la salle
+Live/DemoSettings.cs                → variables de démo + variables Clever
+Live/LiveRoom.cs                    → état partagé en mémoire (navigateurs, journal, battement, signaux)
+Live/VisitorCircuit.cs              → CircuitHandler scoped : Join/Leave à la connexion/coupure du WebSocket
+Live/PulseService.cs                → BackgroundService, PeriodicTimer(PULSE_MS)
+Components/Shared/LiveBoard.razor   → premier écran, rendu InteractiveServer (pré-rendu puis abonnement dans OnAfterRender)
+Components/Shared/PlatformPanel.razor → variables de démo + variables Clever
+Components/Shared/CleverCert.razor  → bloc certification (badge SVG avec id : une seule inclusion par page)
+Components/Pages/                   → Home, Counter, Error
+wwwroot/cc-brand.css                → Clever Brand Kit — ne pas modifier
+wwwroot/app.css                     → styles propres (préfixe lb-)
 ```
 
 ---
 
-## 🎨 Design — Clever Brand Kit
+## 🎨 Design
 
-- Système visuel unique partagé par les démos Clever Cloud : `wwwroot/cc-brand.css` (tokens `--cc-*`, `.cc-topbar`, `.cc-hero`, `.cc-cert`, `.cc-platform`, `.cc-card`, `.cc-btn`, `.cc-footer`). Spec : `docs/superpowers/specs/2026-09-06-clever-brand-design.md`.
-- Polices : Plus Jakarta Sans + JetBrains Mono (Google Fonts, repli système). Thème navy `#13172e`, dégradé Clever `#f57461 → #cb1c42 → #a51050`.
-- Structure de la page d'accueil : topbar → héro → bloc certification → contenu démo + `PlatformPanel` → « Ce que Clever Cloud fait » → footer.
-- `PlatformPanel` lit `CC_APP_NAME`, `APP_ID`, `INSTANCE_NUMBER`, `INSTANCE_TYPE`, `CC_PRETTY_INSTANCE_NAME`, `CC_COMMIT_ID`, `CC_DEPLOYMENT_ID` ; `APP_ID` absent → « Local · hors Clever Cloud ».
-- Pas de Bootstrap, pas de `.razor.css` isolé, aucun package NuGet : les styles propres à la démo vont dans `wwwroot/app.css`, jamais dans `cc-brand.css`.
+- Kit `cc-brand.css` intact ; styles propres dans `wwwroot/app.css` (préfixe `lb-`), dégradé assombri `#d14836 → #cb1c42 → #a51050` pour le texte blanc.
+- Premier écran = le produit : titre « N navigateurs en direct. », orbite des navigateurs autour de l'instance, battement serveur, journal.
+- Couleurs des navigateurs : `.lb-hue--0..5` (contraste ≥ 4,5:1 sur navy). `prefers-reduced-motion` coupe pulsations, ondes et rotation du badge.
 - Piège Razor : dans `App.razor`, les `@` de l'URL Google Fonts sont échappés en `@@`.
 
 ---
@@ -129,23 +139,20 @@ clevercloud/dotnet.json       → indication du .csproj (legacy ; officiel = CC_
 ## 🚀 Déployer une modification
 
 ```bash
-git add .
+git add <fichiers>
 git commit -m "description"
-git push
+clever deploy
 ```
-
-Une fois le dépôt lié à une application .NET, Clever Cloud redéploie automatiquement à chaque push.
 
 ---
 
 ## ⚠️ Points de vigilance
 
-- **Ne pas réactiver `UseHttpsRedirection()`** — Clever Cloud gère le HTTPS au proxy, l'app ne reçoit que du HTTP en interne
-- **Ne pas réactiver `UseHsts()`** — même raison (retiré de `Program.cs`)
-- Blazor Server nécessite une connexion SignalR persistante — vérifier que le timeout de la plateforme est suffisant
-- **1 instance seulement** : circuits Blazor Server en mémoire, pas de scaling horizontal sans backplane (Redis)
-- Le fichier projet s'appelle `cc-dotnet-demo.csproj` — à garder cohérent avec `CC_DOTNET_PROJ` et `clevercloud/dotnet.json`
-- **.NET 8 : fin de support le 10 novembre 2026** — planifier la migration `net10.0` (LTS jusqu'en novembre 2028, `CC_DOTNET_VERSION` sur Clever)
+- Ne pas réactiver `UseHttpsRedirection()` / `UseHsts()` (proxy Clever)
+- **1 instance** : pas de backplane SignalR ; le compteur « mises à jour poussées » et la salle repartent à zéro à chaque redémarrage
+- `Changed` de `LiveRoom` est invoqué hors verrou, chaque composant repasse par `InvokeAsync` ; signaux limités à un toutes les 400 ms par navigateur
+- Captures headless : `--virtual-time-budget` ne laisse pas le WebSocket se connecter (seul le pré-rendu apparaît) ; piloter Chrome par CDP pour capturer l'état connecté
+- **.NET 8 : fin de support le 10 novembre 2026** — doc Clever : `10.0 (LTS)` accepté via `CC_DOTNET_VERSION` ; migrer `net10.0` dès qu'un SDK 10 est disponible pour tester
 
 ---
 
@@ -153,8 +160,8 @@ Une fois le dépôt lié à une application .NET, Clever Cloud redéploie automa
 
 | Symptôme | Cause probable | Correction |
 |---|---|---|
-| Redirect loop | `UseHttpsRedirection()` actif | Vérifier `Program.cs` — doit être absent |
-| App non trouvée au build | `.csproj` mal référencé | Poser `CC_DOTNET_PROJ=cc-dotnet-demo` (mécanisme officiel) ; `clevercloud/dotnet.json` n'est qu'un reliquat |
-| Page blanche / SignalR KO | Timeout connexion | Vérifier les logs runtime Clever Cloud |
-| Port non écouté | `appsettings.json` mal configuré | Doit contenir `"Urls": "http://0.0.0.0:8080"` (ou `ASPNETCORE_URLS` posée) |
-| Health check en échec | `CC_HEALTH_CHECK_PATH` absent ou faux | Définir `/health` |
+| Redirect loop | `UseHttpsRedirection()` actif | Le retirer de `Program.cs` |
+| Health check en échec | `CC_HEALTH_CHECK_PATH` absent ou faux | `/health` |
+| « Connexion en direct… » reste affiché | WebSocket bloqué / circuit non établi | Logs runtime (`clever logs`), console navigateur |
+| Deux salles différentes selon l'onglet | Plus d'une instance | `clever scale --min-instances 1 --max-instances 1` |
+| Variable de démo sans effet | Lue au démarrage | `clever restart` |
